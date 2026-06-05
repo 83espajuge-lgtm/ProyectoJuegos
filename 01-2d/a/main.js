@@ -946,7 +946,7 @@ class MainScene extends Phaser.Scene {
     this.time.delayedCall(4000, () => {
       this.cameras.main.fade(1500, 0, 0, 0, false, (camera, progress) => {
         if (progress === 1) {
-          this.scene.restart();
+          window.location.href = 'escenario2.html';
         }
       });
     });
