@@ -21,7 +21,7 @@ class MainScene extends Phaser.Scene {
     // Load the empty tilemap JSON
     this.load.tilemapTiledJSON('mapa_escenario1', './mapa_escenario1.json');
     // Load the ambient background music
-    this.load.audio('ambient_song', '../../song.mp3');
+    this.load.audio('ambient_song', './song.mp3');
   }
 
   create() {
