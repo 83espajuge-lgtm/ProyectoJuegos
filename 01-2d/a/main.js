@@ -1231,35 +1231,57 @@ class MainScene extends Phaser.Scene {
 
   drawBoyFrame(ctx, frameIdx, xOffset) {
     let hx = xOffset + 24;
-    let hy = 13; // Lowered head center slightly to make room for hair spikes
+    let hy = 13;
     
-    ctx.fillStyle = '#0e0e0e'; // Deep silhouette body
-    
-    // 1. Messy windblown hair spikes (drawn behind/top of head)
+    // 1. MESSY BROWN HAIR (Drawn on top and back of head)
+    ctx.fillStyle = '#5c4033'; // Dark brown hair
     ctx.beginPath();
-    // Tuft 1 (back-left)
-    ctx.moveTo(hx - 7, hy - 4); ctx.lineTo(hx - 12, hy - 5); ctx.lineTo(hx - 7, hy);
-    // Tuft 2 (top-left)
-    ctx.moveTo(hx - 5, hy - 6); ctx.lineTo(hx - 9, hy - 10); ctx.lineTo(hx - 3, hy - 7);
-    // Tuft 3 (top-middle)
-    ctx.moveTo(hx - 2, hy - 8); ctx.lineTo(hx - 4, hy - 12); ctx.lineTo(hx + 1, hy - 8);
+    // Spiky tufts back-left
+    ctx.moveTo(hx - 7, hy - 4); ctx.lineTo(hx - 13, hy - 5); ctx.lineTo(hx - 7, hy + 1);
+    // Spiky tufts top-left
+    ctx.moveTo(hx - 5, hy - 6); ctx.lineTo(hx - 10, hy - 11); ctx.lineTo(hx - 2, hy - 7);
+    // Spiky tufts top-middle
+    ctx.moveTo(hx - 2, hy - 8); ctx.lineTo(hx - 4, hy - 13); ctx.lineTo(hx + 2, hy - 8);
+    // Spiky tufts top-right
+    ctx.moveTo(hx + 2, hy - 8); ctx.lineTo(hx + 4, hy - 11); ctx.lineTo(hx + 6, hy - 7);
     ctx.closePath(); ctx.fill();
 
-    // 2. Head circle (Enlarged to 8px for child-like proportions)
+    // 2. FACE (Skin tone)
+    ctx.fillStyle = '#ffdbac'; // Peach skin tone
     ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2); ctx.fill();
+
+    // Re-draw hair overlay cap on top half
+    ctx.fillStyle = '#5c4033';
+    ctx.beginPath(); ctx.arc(hx, hy - 1, 8, Math.PI, 0); ctx.fill();
     
-    // 3. Expressive glowing eyes
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(hx + 1, hy - 2, 2.5, 2.5);
-    ctx.fillRect(hx + 4, hy - 2, 2.5, 2.5);
-    
-    // 4. Scarf (Red/White tone for contrast in gray world)
-    ctx.fillStyle = '#dcdcdc';
+    // Hair bangs/fringe on forehead
     ctx.beginPath();
-    ctx.roundRect(hx - 5, hy + 6, 10, 3, 1.5);
+    ctx.moveTo(hx - 2, hy - 4); ctx.lineTo(hx + 3, hy - 2); ctx.lineTo(hx + 6, hy - 4); ctx.lineTo(hx + 1, hy - 6);
+    ctx.closePath(); ctx.fill();
+    
+    // 3. CARTOON EYES (Facing right)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(hx + 2, hy - 2, 2, 3);
+    ctx.fillRect(hx + 5, hy - 2, 2, 3);
+    ctx.fillStyle = '#111111'; // Pupils
+    ctx.fillRect(hx + 3, hy - 1, 1, 2);
+    ctx.fillRect(hx + 6, hy - 1, 1, 2);
+
+    // Cute blush cheeks
+    ctx.fillStyle = 'rgba(255, 120, 120, 0.4)';
+    ctx.beginPath(); ctx.arc(hx + 1, hy + 2, 1.5, 0, Math.PI * 2); ctx.arc(hx + 6, hy + 2, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    // Small Smile
+    ctx.strokeStyle = '#c68642'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(hx + 4, hy + 1, 1.8, 0, Math.PI); ctx.stroke();
+    
+    // 4. BRIGHT RED SCARF (Contrast color)
+    ctx.fillStyle = '#cc2222';
+    ctx.beginPath();
+    ctx.roundRect(hx - 5, hy + 6, 10, 3.5, 1.5);
     ctx.fill();
     
-    // Scarf tail waving behind
+    // Scarf tail waving
     ctx.beginPath(); ctx.moveTo(hx - 3, hy + 7);
     let wave = Math.sin(frameIdx * 1.3) * 3;
     ctx.lineTo(hx - 12, hy + 9 + wave);
@@ -1267,37 +1289,49 @@ class MainScene extends Phaser.Scene {
     ctx.lineTo(hx - 2, hy + 9);
     ctx.closePath(); ctx.fill();
     
-    // 5. Body Coat (Slightly oversized to look like a small boy in a big coat)
-    ctx.fillStyle = '#0e0e0e';
+    // 5. BLUE HOODIE / SWEATER
+    ctx.fillStyle = '#2a75d3'; // Bright blue
     ctx.beginPath();
-    ctx.moveTo(hx - 5, hy + 8); 
-    ctx.lineTo(hx + 5, hy + 8);
-    ctx.lineTo(hx + 8, 34); 
-    ctx.lineTo(hx - 8, 34);
+    ctx.moveTo(hx - 5, hy + 9); 
+    ctx.lineTo(hx + 5, hy + 9);
+    ctx.lineTo(hx + 7, 34); 
+    ctx.lineTo(hx - 7, 34);
     ctx.closePath(); ctx.fill();
 
-    // Subtle coat texture/line
-    ctx.strokeStyle = '#181818'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(hx - 2, hy + 16); ctx.lineTo(hx + 2, hy + 24); ctx.stroke();
+    // Sleeve and hand detail
+    ctx.strokeStyle = '#1d5aa8'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(hx - 3, hy + 15); ctx.lineTo(hx + 1, hy + 22); ctx.stroke();
+    ctx.fillStyle = '#ffdbac'; // Hand skin tone
+    ctx.beginPath(); ctx.arc(hx + 1, hy + 22, 1.5, 0, Math.PI * 2); ctx.fill();
     
-    // 6. Legs walking movement (Thicker 4px pitter-patter legs)
-    ctx.strokeStyle = '#0e0e0e'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    
+    // 6. TROUSERS AND SNEAKERS
     let la = 0, ra = 0;
     if (frameIdx > 0) {
       la = Math.sin(frameIdx * 1.15) * 0.45;
       ra = -Math.sin(frameIdx * 1.15) * 0.45;
     }
+
+    ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 4.5; ctx.lineCap = 'round'; // Dark gray trousers
     
-    // Left leg
-    ctx.beginPath(); ctx.moveTo(hx - 3, 34);
-    ctx.lineTo(hx - 3 + Math.sin(la) * 11, 34 + Math.cos(la) * 11);
-    ctx.stroke();
+    // Left Leg & white/red sneaker
+    let lx = hx - 3 + Math.sin(la) * 9;
+    let ly = 34 + Math.cos(la) * 9;
+    ctx.beginPath(); ctx.moveTo(hx - 3, 34); ctx.lineTo(lx, ly); ctx.stroke();
     
-    // Right leg
-    ctx.beginPath(); ctx.moveTo(hx + 3, 34);
-    ctx.lineTo(hx + 3 + Math.sin(ra) * 11, 34 + Math.cos(ra) * 11);
-    ctx.stroke();
+    ctx.fillStyle = '#ffffff'; // White sole
+    ctx.beginPath(); ctx.arc(lx, ly + 1.5, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#cc2222'; // Red body
+    ctx.fillRect(lx - 2.2, ly + 0.5, 4.4, 1.5);
+    
+    // Right Leg & white/red sneaker
+    let rx = hx + 3 + Math.sin(ra) * 9;
+    let ry = 34 + Math.cos(ra) * 9;
+    ctx.beginPath(); ctx.moveTo(hx + 3, 34); ctx.lineTo(rx, ry); ctx.stroke();
+    
+    ctx.fillStyle = '#ffffff'; // White sole
+    ctx.beginPath(); ctx.arc(rx, ry + 1.5, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#cc2222'; // Red body
+    ctx.fillRect(rx - 2.2, ry + 0.5, 4.4, 1.5);
   }
 
   // Draw a frame of the spider (Esperpento Arácnido)
