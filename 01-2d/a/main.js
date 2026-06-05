@@ -1229,42 +1229,59 @@ class MainScene extends Phaser.Scene {
     });
   }
 
-  // Draw a frame of the boy (El Niño)
   drawBoyFrame(ctx, frameIdx, xOffset) {
     let hx = xOffset + 24;
-    let hy = 14;
+    let hy = 13; // Lowered head center slightly to make room for hair spikes
     
-    ctx.fillStyle = '#0f0f0f'; // Dark silhouette body
+    ctx.fillStyle = '#0e0e0e'; // Deep silhouette body
     
-    // Head circle
-    ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI * 2); ctx.fill();
+    // 1. Messy windblown hair spikes (drawn behind/top of head)
+    ctx.beginPath();
+    // Tuft 1 (back-left)
+    ctx.moveTo(hx - 7, hy - 4); ctx.lineTo(hx - 12, hy - 5); ctx.lineTo(hx - 7, hy);
+    // Tuft 2 (top-left)
+    ctx.moveTo(hx - 5, hy - 6); ctx.lineTo(hx - 9, hy - 10); ctx.lineTo(hx - 3, hy - 7);
+    // Tuft 3 (top-middle)
+    ctx.moveTo(hx - 2, hy - 8); ctx.lineTo(hx - 4, hy - 12); ctx.lineTo(hx + 1, hy - 8);
+    ctx.closePath(); ctx.fill();
+
+    // 2. Head circle (Enlarged to 8px for child-like proportions)
+    ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2); ctx.fill();
     
-    // Glowing eyes facing forward-right
+    // 3. Expressive glowing eyes
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(hx + 1, hy - 1, 2, 2);
-    ctx.fillRect(hx + 4, hy - 1, 2, 2);
+    ctx.fillRect(hx + 1, hy - 2, 2.5, 2.5);
+    ctx.fillRect(hx + 4, hy - 2, 2.5, 2.5);
     
-    // Red/White Scarf for visual contrast in monochrome
-    ctx.fillStyle = '#e0e0e0';
-    ctx.fillRect(hx - 4, hy + 5, 8, 3);
+    // 4. Scarf (Red/White tone for contrast in gray world)
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath();
+    ctx.roundRect(hx - 5, hy + 6, 10, 3, 1.5);
+    ctx.fill();
     
-    // Scarf tail waving
-    ctx.fillStyle = '#e0e0e0';
+    // Scarf tail waving behind
     ctx.beginPath(); ctx.moveTo(hx - 3, hy + 7);
     let wave = Math.sin(frameIdx * 1.3) * 3;
-    ctx.lineTo(hx - 11, hy + 10 + wave);
-    ctx.lineTo(hx - 3, hy + 12);
+    ctx.lineTo(hx - 12, hy + 9 + wave);
+    ctx.lineTo(hx - 11, hy + 13 + wave);
+    ctx.lineTo(hx - 2, hy + 9);
     ctx.closePath(); ctx.fill();
     
-    // Body Coat
-    ctx.fillStyle = '#0f0f0f';
+    // 5. Body Coat (Slightly oversized to look like a small boy in a big coat)
+    ctx.fillStyle = '#0e0e0e';
     ctx.beginPath();
-    ctx.moveTo(hx - 6, 20); ctx.lineTo(hx + 6, 20);
-    ctx.lineTo(hx + 8, 34); ctx.lineTo(hx - 8, 34);
+    ctx.moveTo(hx - 5, hy + 8); 
+    ctx.lineTo(hx + 5, hy + 8);
+    ctx.lineTo(hx + 8, 34); 
+    ctx.lineTo(hx - 8, 34);
     ctx.closePath(); ctx.fill();
+
+    // Subtle coat texture/line
+    ctx.strokeStyle = '#181818'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(hx - 2, hy + 16); ctx.lineTo(hx + 2, hy + 24); ctx.stroke();
     
-    // Legs walking movement
-    ctx.strokeStyle = '#0f0f0f'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    // 6. Legs walking movement (Thicker 4px pitter-patter legs)
+    ctx.strokeStyle = '#0e0e0e'; ctx.lineWidth = 4; ctx.lineCap = 'round';
     
     let la = 0, ra = 0;
     if (frameIdx > 0) {
