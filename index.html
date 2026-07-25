@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Videodrome — Nivel 1: Bosque de Niebla · Nivel 3: El Espejismo de Otoño">
-    <title>Videodrome — 2 Niveles</title>
+    <meta name="description" content="Videodrome — Nivel 1: Bosque de Niebla · Nivel 2: Zona Industrial Asfixiante · Nivel 3: El Espejismo de Otoño">
+    <title>Videodrome — 3 Niveles</title>
 
     <!-- Google Fonts: pixel retro + typewriter for both levels -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,6 +16,7 @@
 </head>
 <body>
     <div id="game-container" tabindex="0"></div>
+    <button id="skip-level-btn" style="position: fixed; bottom: 10px; right: 10px; z-index: 10000; padding: 8px 12px; background: #cc6633; color: white; border: 2px solid #ffcc66; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">SALTAR NIVEL</button>
     <script src="game.js"></script>
     <div id="error-box" style="display:none; position:fixed; top:0; left:0; right:0; background:#cc2222; color:white; padding:12px; z-index:9999; font-family:monospace; font-size:12px; max-height:40vh; overflow:auto;"></div>
     <script>
@@ -25,6 +26,38 @@
             var stack = error && error.stack ? error.stack.replace(/\n/g,'<br>') : '';
             box.innerHTML += '<strong>Error:</strong> ' + message + '<br>Línea: ' + lineno + '<br><small>' + stack + '</small><hr>';
         };
+
+        document.getElementById('skip-level-btn').addEventListener('click', function() {
+            if (typeof game !== 'undefined' && game.scene) {
+                const activeScenes = game.scene.getScenes(true);
+                for (let scene of activeScenes) {
+                    if (scene.scene.key === 'MainScene') {
+                        let m = scene.sound.get('ambient_song');
+                        if (m) m.stop();
+                        scene.scene.stop('MainScene');
+                        scene.scene.start('Scene2');
+                        return;
+                    } else if (scene.scene.key === 'Scene2') {
+                        let m = scene.sound.get('ambient_song2');
+                        if (m) m.stop();
+                        let m1 = scene.sound.get('ambient_song');
+                        if (m1) m1.stop();
+                        scene.scene.stop('Scene2');
+                        scene.scene.start('GameScene');
+                        return;
+                    } else if (scene.scene.key === 'GameScene') {
+                        if (typeof gameMusic !== 'undefined' && gameMusic) {
+                            gameMusic.stop();
+                            gameMusic.isPlaying = false;
+                        }
+                        scene.scene.stop('GameScene');
+                        scene.scene.stop('UIScene');
+                        scene.scene.start('MenuScene');
+                        return;
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>
