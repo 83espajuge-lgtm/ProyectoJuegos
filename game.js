@@ -1150,6 +1150,9 @@ class Scene2 extends Phaser.Scene {
     this.steamBlock.body.setAllowGravity(false).setImmovable(true);
     this.steamBlock.setDisplaySize(320, 16);
     this.steamStartX = 14 * 64;
+    this.steamBlock.setPosition(this.steamStartX - 350, this.steamBlock.y);
+    this.steamBlock.setVisible(false);
+    this.steamBlock.body.enable = false;
 
     this.sensor1 = this.physics.add.sprite(28 * 64 + 32, 8 * 64 - 8, 'sensor', '0');
     this.sensor1.body.setAllowGravity(false).setImmovable(true);
@@ -1378,6 +1381,14 @@ class Scene2 extends Phaser.Scene {
       }
     }
 
+    this.crates.getChildren().forEach(c => {
+      if (Math.abs(c.body.velocity.x) > 5) {
+        c.body.velocity.x *= 0.8;
+      } else {
+        c.body.velocity.x = 0;
+      }
+    });
+
     if (this.player.x > 1200 && this.currentCheckpoint.x < 1200) {
       this.currentCheckpoint = { x: 1250, y: 400 };
       this.showTemporaryHint('☑ Punto de control 1.');
@@ -1410,14 +1421,15 @@ class Scene2 extends Phaser.Scene {
           this.valve1.setFrame('1');
           this.cameras.main.shake(300, 0.009);
           this.cameras.main.flash(200, 255, 120, 0);
-          this.showTemporaryHint('¡Vapor desviado! Cruza el foso.');
+          this.showTemporaryHint('¡Vapor liberado! Bloquea el paso.');
 
+          this.steamBlock.setVisible(true);
           this.tweens.add({
             targets: this.steamBlock,
-            x: this.steamStartX - 350,
+            x: this.steamStartX,
             duration: 900,
             ease: 'Cubic.easeInOut',
-            onComplete: () => { this.steamBlock.body.enable = false; }
+            onComplete: () => { this.steamBlock.body.enable = true; }
           });
         }
       } else {
@@ -1587,11 +1599,28 @@ class Scene2 extends Phaser.Scene {
       robot.setData('alerted', false).setData('alertTimer', 0);
     });
 
+    if (this.steamBlock) {
+      this.steamBlock.setPosition(this.steamStartX - 350, this.steamBlock.y);
+      this.steamBlock.setVisible(false);
+      this.steamBlock.body.enable = false;
+    }
+    if (this.valve1) {
+      this.valve1Active = false;
+      this.valve1.setFrame('0');
+    }
     if (this.gasCover) {
       this.gasCoverRetracted = false;
       if (this.valve2) this.valve2.setFrame('0');
       this.gasCover.setPosition(38.5 * 64, 8 * 64 - 8);
       this.gasCover.body.enable = true;
+    }
+    if (this.crate1) {
+      this.crate1.setPosition(5 * 64 + 32, 7 * 64);
+      this.crate1.setVelocity(0, 0);
+    }
+    if (this.crate2) {
+      this.crate2.setPosition(22 * 64 + 32, 7 * 64);
+      this.crate2.setVelocity(0, 0);
     }
     if (this.crate3) {
       this.crate3.setPosition(38.5 * 64, 7 * 64);

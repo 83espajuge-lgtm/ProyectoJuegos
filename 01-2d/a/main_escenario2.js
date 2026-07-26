@@ -174,22 +174,24 @@ class Scene2 extends Phaser.Scene {
 
     // Crate 1 — for sensor puzzle
     this.crate1 = this.physics.add.sprite(5 * 64 + 32, 7 * 64, 'crate_metal');
-    this.crate1.setCollideWorldBounds(true).setDragX(5000).setBounce(0).setMass(4);
+    this.crate1.setCollideWorldBounds(true).setDragX(600).setBounce(0).setMass(4).setFriction(0.8, 0);
     this.crates.add(this.crate1);
 
     // Crate 2 — for tunnel pressure plate
     this.crate2 = this.physics.add.sprite(22 * 64 + 32, 7 * 64, 'crate_metal');
-    this.crate2.setCollideWorldBounds(true).setDragX(5000).setBounce(0).setMass(4);
+    this.crate2.setCollideWorldBounds(true).setDragX(600).setBounce(0).setMass(4).setFriction(0.8, 0);
     this.crates.add(this.crate2);
 
     // --- Puzzle 1: Valve + Steam Trap ---
     this.valve1 = this.physics.add.sprite(9 * 64, 5 * 64 - 16, 'valve', '0');
     this.valve1.body.setAllowGravity(false).setImmovable(true);
 
-    // Steam jet blocker over pit 1 — slides away when valve is activated
+    // Steam jet blocker over pit 1 — appears when valve is activated
     this.steamBlock = this.physics.add.sprite(14 * 64, 6 * 64 + 16, 'steam_block');
     this.steamBlock.body.setAllowGravity(false).setImmovable(true);
     this.steamBlock.setDisplaySize(320, 16);
+    this.steamBlock.setVisible(false);
+    this.steamBlock.body.enable = false;
     this.steamStartX = 14 * 64;
 
     // --- Puzzle 2: Sensor + Bridge (gate) ---
@@ -206,11 +208,13 @@ class Scene2 extends Phaser.Scene {
     this.gasCover = this.physics.add.sprite(38.5 * 64, 8 * 64 - 8, 'steam_block');
     this.gasCover.body.setAllowGravity(false).setImmovable(true);
     this.gasCover.setDisplaySize(192, 16);
+    this.gasCover.setVisible(false);
+    this.gasCover.body.enable = false;
     this.valve2Active = false;
     this.gasCoverRetracted = false;
 
     this.crate3 = this.physics.add.sprite(38.5 * 64, 7 * 64, 'crate_metal');
-    this.crate3.setCollideWorldBounds(true).setDragX(5000).setBounce(0).setMass(4);
+    this.crate3.setCollideWorldBounds(true).setDragX(600).setBounce(0).setMass(4).setFriction(0.8, 0);
     this.crates.add(this.crate3);
 
     // --- Puzzle 4: Robot herding through sensor ---
@@ -477,14 +481,16 @@ class Scene2 extends Phaser.Scene {
           this.valve1.setFrame('1');
           this.cameras.main.shake(300, 0.009);
           this.cameras.main.flash(200, 255, 120, 0);
-          this.showTemporaryHint('¡Vapor desviado! Cruza el foso.');
+          this.showTemporaryHint('¡Vapor activado! El bloque de vapor aparece.');
 
+          this.steamBlock.setVisible(true);
+          this.steamBlock.body.enable = true;
+          this.steamBlock.x = this.steamStartX - 350;
           this.tweens.add({
             targets: this.steamBlock,
-            x: this.steamStartX - 350,
+            x: this.steamStartX,
             duration: 900,
-            ease: 'Cubic.easeInOut',
-            onComplete: () => { this.steamBlock.body.enable = false; }
+            ease: 'Cubic.easeInOut'
           });
         }
       } else {
@@ -543,13 +549,17 @@ class Scene2 extends Phaser.Scene {
           this.gasCoverRetracted = true;
           this.valve2.setFrame('1');
           this.cameras.main.shake(300, 0.008);
-          this.showTemporaryHint('Cubierta de gas abriéndose...');
+          this.showTemporaryHint('Cubierta de gas desplegándose...');
+
+          this.gasCover.setVisible(true);
+          this.gasCover.body.enable = true;
+          const gasTargetX = 38.5 * 64;
+          this.gasCover.x = gasTargetX - 220;
           this.tweens.add({
             targets: this.gasCover,
-            x: this.gasCover.x - 220,
+            x: gasTargetX,
             duration: 1000,
-            ease: 'Cubic.easeInOut',
-            onComplete: () => { this.gasCover.body.enable = false; }
+            ease: 'Cubic.easeInOut'
           });
         }
       } else {
@@ -653,7 +663,7 @@ class Scene2 extends Phaser.Scene {
     });
   }
 
-  resetRobots() {
+    resetRobots() {
     this.robots.getChildren().forEach(robot => {
       let startX = robot.getData('startX');
       robot.setPosition(startX, 7 * 64);
@@ -662,16 +672,43 @@ class Scene2 extends Phaser.Scene {
       robot.setData('alerted', false).setData('alertTimer', 0);
     });
 
-    // Reset puzzle 3
-    if (this.gasCover) {
+    // Reset puzzle 1: valve + steam block
+    if (this.valve1) {
+      this.valve1Active = false;
+      this.valve1.setFrame('0');
+    }
+    if (this.steamBlock) {
+      this.steamBlock.setVisible(false);
+      this.steamBlock.body.enable = false;
+      this.steamBlock.setPosition(this.steamStartX, 6 * 64 + 16);
+    }
+
+    // Reset puzzle 2: crate1 position
+    if (this.crate1) {
+      this.crate1.setPosition(5 * 64 + 32, 7 * 64);
+      this.crate1.setVelocity(0, 0);
+      this.crate1.body.enable = true;
+    }
+    if (this.crate2) {
+      this.crate2.setPosition(22 * 64 + 32, 7 * 64);
+      this.crate2.setVelocity(0, 0);
+      this.crate2.body.enable = true;
+    }
+
+    // Reset puzzle 3: valve + gas cover + crate3
+    if (this.valve2) {
       this.gasCoverRetracted = false;
-      if (this.valve2) this.valve2.setFrame('0');
+      this.valve2.setFrame('0');
+    }
+    if (this.gasCover) {
+      this.gasCover.setVisible(false);
+      this.gasCover.body.enable = false;
       this.gasCover.setPosition(38.5 * 64, 8 * 64 - 8);
-      this.gasCover.body.enable = true;
     }
     if (this.crate3) {
       this.crate3.setPosition(38.5 * 64, 7 * 64);
       this.crate3.setVelocity(0, 0);
+      this.crate3.body.enable = true;
     }
   }
 
