@@ -75,6 +75,67 @@ class PianoSynth {
 }
 let gameMusic = null;
 
+function playRetroSFX(type) {
+    try {
+        const ctx = window.gameAudioContext || (window.gameAudioContext = new (window.AudioContext || window.webkitAudioContext)());
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'jump') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(450, now + 0.15);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        } else if (type === 'lever' || type === 'click') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.setValueAtTime(150, now + 0.05);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } else if (type === 'plate') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'death') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.exponentialRampToValueAtTime(55, now + 0.45);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        } else if (type === 'victory') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(261.63, now);
+            osc.frequency.setValueAtTime(329.63, now + 0.08);
+            osc.frequency.setValueAtTime(392.00, now + 0.16);
+            osc.frequency.setValueAtTime(523.25, now + 0.24);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.setValueAtTime(0.15, now + 0.24);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        }
+    } catch (e) {
+        console.error("SFX error:", e);
+    }
+}
+
 // ════════════════════════════════════════════════════════════
 //  BOOT SCENE — genera todas las texturas compartidas
 // ════════════════════════════════════════════════════════════
@@ -484,6 +545,11 @@ class MainScene extends Phaser.Scene {
         this.isDead = false;
         this.levelComplete = false;
         this.currentCheckpoint = { x: 150, y: 400 };
+        this.coyoteCounter = 0;
+        this.jumpBufferCounter = 0;
+        if (typeof window.deathCountLevel1 === 'undefined') {
+            window.deathCountLevel1 = 1;
+        }
     }
 
     preload() {
@@ -491,6 +557,7 @@ class MainScene extends Phaser.Scene {
     }
 
     create() {
+        this.physics.world.gravity.y = 1300;
         const tileWidth = 64, tileHeight = 64;
         const mapCols = 80, mapRows = 10;
         const mapWidth  = mapCols * tileWidth;
@@ -710,6 +777,15 @@ class MainScene extends Phaser.Scene {
         if (!music) { music = this.sound.add('ambient_song', { loop: true, volume: 0.35 }); music.play(); }
         else if (!music.isPlaying) { music.play(); }
 
+        // HUD Attempts
+        this.hudText = this.add.text(16, 16, `INTENTOS: ${window.deathCountLevel1}`, {
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '12px',
+            color: '#ff3333',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setScrollFactor(0).setDepth(200);
+
         focusGameCanvas();
     }
 
@@ -723,6 +799,20 @@ class MainScene extends Phaser.Scene {
     update(time, delta) {
         if (Phaser.Input.Keyboard.JustDown(this.wasd.reset)) { this.scene.restart(); return; }
         if (this.isDead || this.levelComplete) return;
+
+        // Update Coyote and Jump Buffer timers
+        if (this.player.body.blocked.down) {
+            this.coyoteCounter = 120; // 120ms coyote window
+        } else {
+            this.coyoteCounter -= delta;
+        }
+
+        const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.wasd.up);
+        if (jumpPressed) {
+            this.jumpBufferCounter = 120; // 120ms jump buffer
+        } else if (this.jumpBufferCounter > 0) {
+            this.jumpBufferCounter -= delta;
+        }
 
         const speed = 160;
         if (this.cursors.left.isDown || this.wasd.left.isDown) {
@@ -739,10 +829,22 @@ class MainScene extends Phaser.Scene {
             this.player.setVelocityX(0);
             this.player.anims.play('idle', true);
         }
-        if ((this.cursors.up.isDown || this.wasd.up.isDown) && this.player.body.blocked.down) {
-            this.player.setVelocityY(-580);
+
+        // Jump logic with Coyote Time & Jump Buffer
+        if (this.jumpBufferCounter > 0 && this.coyoteCounter > 0) {
+            this.player.setVelocityY(-620); // Snappy jump!
+            this.coyoteCounter = 0;
+            this.jumpBufferCounter = 0;
             this._runDust(this.player.x, this.player.y + 20);
+            playRetroSFX('jump');
         }
+
+        // Variable Jump Height (Jump Cut)
+        const jumpReleased = Phaser.Input.Keyboard.JustUp(this.cursors.up) || Phaser.Input.Keyboard.JustUp(this.wasd.up);
+        if (jumpReleased && this.player.body.velocity.y < -150) {
+            this.player.setVelocityY(-150);
+        }
+
         if (this.player.y > 600) this.playerDie();
 
         // Checkpoints
@@ -760,6 +862,7 @@ class MainScene extends Phaser.Scene {
                     this.lift.setVelocityX(80);
                     this.cameras.main.flash(200, 200, 200, 200);
                     this._hint('Mecanismo de elevador activado.');
+                    playRetroSFX('lever');
                 }
             } else { this.hintText.setText('Mecanismo activo').setVisible(true); }
         } else {
@@ -781,6 +884,7 @@ class MainScene extends Phaser.Scene {
                     this.cameras.main.flash(200, 200, 200, 200).shake(300, 0.008);
                     this._hint('Trampilla abriéndose...');
                     this.tweens.add({ targets: this.trapdoor, x: this.trapdoor.x - 220, duration: 1000, ease: 'Cubic.easeInOut', onComplete: () => { this.trapdoor.body.enable = false; } });
+                    playRetroSFX('lever');
                 }
             } else { this.hintText.setText('Trampilla abierta').setVisible(true); }
         }
@@ -793,10 +897,12 @@ class MainScene extends Phaser.Scene {
             this.cameras.main.shake(150, 0.005);
             this._hint('Portón de hierro 1 abriéndose...');
             this.tweens.add({ targets: this.gate, y: 7*64-180, duration: 1000, ease: 'Cubic.easeOut', onComplete: () => { this.gate.body.enable = false; } });
+            playRetroSFX('plate');
         } else if (!crateOnPlate && this.platePressed) {
             this.platePressed = false; this.plate.setFrame('0'); this.gate.body.enable = true;
             this.cameras.main.shake(100, 0.004);
             this.tweens.add({ targets: this.gate, y: 7*64-64, duration: 600, ease: 'Bounce.easeOut' });
+            playRetroSFX('plate');
         }
 
         // Plate 2 / gate 2 (spider)
@@ -807,10 +913,12 @@ class MainScene extends Phaser.Scene {
             this.cameras.main.shake(150, 0.005);
             this._hint('Portón de hierro 2 abriéndose...');
             this.tweens.add({ targets: this.gate2, y: 7*64-180, duration: 1000, ease: 'Cubic.easeOut', onComplete: () => { this.gate2.body.enable = false; } });
+            playRetroSFX('plate');
         } else if (!spiderOnPlate2 && this.plate2Pressed) {
             this.plate2Pressed = false; this.plate2.setFrame('0'); this.gate2.body.enable = true;
             this.cameras.main.shake(100, 0.004);
             this.tweens.add({ targets: this.gate2, y: 7*64-64, duration: 600, ease: 'Bounce.easeOut' });
+            playRetroSFX('plate');
         }
 
         // Spiders AI
@@ -888,6 +996,14 @@ class MainScene extends Phaser.Scene {
         if (this.isDead) return;
         this.isDead = true;
         this.cameras.main.shake(250, 0.015);
+        this.cameras.main.flash(300, 255, 0, 0); // Red screen flash!
+        playRetroSFX('death');
+
+        window.deathCountLevel1 = (window.deathCountLevel1 || 1) + 1;
+        if (this.hudText) {
+            this.hudText.setText(`INTENTOS: ${window.deathCountLevel1}`);
+        }
+
         this.player.setVelocity(0, 0); this.player.body.enable = false;
         this.tweens.add({ targets: this.player, alpha: 0, duration: 400, onComplete: () => {
             this.player.setPosition(this.currentCheckpoint.x, this.currentCheckpoint.y);
@@ -932,6 +1048,7 @@ class MainScene extends Phaser.Scene {
     _triggerVictory() {
         if (this.levelComplete) return;
         this.levelComplete = true;
+        playRetroSFX('victory');
         this.player.setVelocity(0, 0); this.player.body.enable = false; this.player.anims.play('idle', true);
         this.victoryText.setVisible(true).setAlpha(0);
         this.tweens.add({ targets: this.victoryText, alpha: 1, duration: 800 });
